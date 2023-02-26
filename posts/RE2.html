@@ -1,1 +1,97 @@
-<!DOCTYPE html><html> <head> <title>Reverse Engineering [2]: Your First Crackme</title> <link rel="stylesheet" href="/assets/css/post.css"> <link rel="icon" href="/icon.ico"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <meta charset="UTF-8"> <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script> </head> <body> <nav class="crumbs"> <span><a href="/index.html">Home</a></span> <span><a href="/blog.html">Blog</a></span> <span>Reverse Engineering [2]: Your First Crackme</span> </ol> </nav> <div class="content"> <span class="title"> <h1 class="cmd-effect" id="page-title"><noscript>Reverse Engineering [2]: Your First Crackme</noscript></h1> <p>February 26, 2023</p><div class="tags"> <span>reverse engineering</span> <span>lessons</span> </div></span> <hr/> <div class="post"> <p>If you haven't read my <a href="RE1.html">first post</a> on reverse engineering, please do so as it will give you a better understanding of what we will be doing in this post.</p><p>Today, we will be discussing how to crack a very simple program. A popular site for reverse engineering exercises is "<a href="https://crackmes.one">crackmes.one</a>" where you can find many files to practice with. However, in this post, I will show you how to crack a simple program that I have created using C++. I recommend starting with simple programs and then advancing to more complex ones as your knowledge grows. Let's get started with the lesson!</p><p>First, we need to create our program. You can either create one with me or get a simple one from crackme. I will be making my program in C++. Here's the code:</p><img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079524365433053194/cppRaw.png"> <p>Now that we have our program, let's go ahead and try to crack it! I will be using x64dbg/x32dbg since you may not have IDA Pro. You can download my crackme <a href="https://cdn.discordapp.com/attachments/1079519979650695270/1079529290875543653/BasicCrackMe.exe">here</a> if you want to follow along with the exact copy I am using.</p><p>Once you open x64dbg, drag the file into it. You should see something like this:</p><img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520010046812230/x64dbg_AijkkWK2qS.png"> <p>This may look intimidating, but it's easy to understand once you have knowledge about assembly (ASM). Once it's fully loaded, right-click in the disassembler region and search for the strings (Search For -> All Modules -> String References).</p><img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520105785991298/x64dbg_ClvJQuufPj.png"> <p>Once in the string view, let all the modules load. You may notice the license "402X-X5B9-L02A-MN29" at the top. Don't immediately assume that it's the license because there are compile-time and run-time encryption. We don't have any encryption on our key, so it doesn't apply to our file.<p/> <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520071392702605/x64dbg_ou0ZTpzTFE.png"> <p>A deeper dive into compile-time vs. run-time encryption:</p><p>Compile-time encryption is the process of encrypting data before the program itself is compiled. You can use a tool or library that encrypts the data and generates a header file containing the encrypted data. The header file should then be accessed by the program at run-time after decryption.</p><p>Run-time encryption is the process of encrypting data while the program is running. You must include an encryption library that can encrypt and decrypt the data as needed.</p><p>The main difference between the two is simple. Compile-time encryption occurs before the program is compiled, while run-time encryption occurs while the program is running.</p><p>Does the encryption method used matter? Not really. However, runtime encryption is better suited for dynamic encryption while compile-time encryption makes it more difficult to intercept.</p><p>Moving on to the topic of reverse engineering this file, let's search for the "Wrong Key!" string. To do this, use the search bar or press Ctrl+F and type in "Wrong Key" or your prompt. Once you have the prompt, double-click it to follow it back into the disassembler.</p><img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520143262097529/x64dbg_fbVFPC64hD.png"> <p>While our programs may look different, the ASM code I am looking at is:</p><img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520184924114974/x64dbg_M7gfdst4mF.png"> <p>The code block for this ASM code is:</p><img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079524376220807218/asmRaw.png"> <p>The "lea rdx, qword ptr ds:[Address here]" parts are where we load an affected address into the register, which in this case is "rdx." To make it less confusing, I have excluded the addresses of what we are loading inside the code block.</p><p>Before we dive into how to manipulate the code, let's go over how the code block is aligned:</p>[Instruction] | [Address] <p>The easiest way to crack this is by messing with the jumps. You can find a complete list of jump instructions on <a href="https://www.cs.uaf.edu/2015/fall/cs301/lecture/09_11_loops.html">cs.auf.edu</a>. On line 3, we have "jne," which stands for "jump if not equal." On line 7, we have "je," which stands for "jump if equal." For the first jump, we are jumping to the address "7FF7A56E1385," which is line 8 of our code block. For the second jump, we jump to the address "7FF7A56E138C," which is line 9 of our code block.</p><p>To edit instructions in x64dbg, right-click on the instruction and click "Assemble." Once you have done so, you can edit the instruction.</p><img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079526961078079568/image.png"> <p>To avoid jumping to the wrong key area if they are not equal, replace "jne" with "je." This will make it jump if it is equal rather than not equal. Also, change the second jump from "je" to "jne" to instantly skip loading the incorrect statement ("Wrong Key!\n").</p><p>After making these changes, your ASM code should look like this (if you are using my crackme):</p><img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079524386803044353/asmFinal.png"> <p>To patch the program with all the edited instructions, use the shortcut "Ctrl+P." Once the patch program UI pops up, make sure that both of the little checks in the "Patches" section are selected. Click on "Patch File" and save the file to the desired name and directory.</p><img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520466714238988/image.png"> <p>Before:</p><img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520532988448889/image.png"> <p>After:</p><img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520568119922708/image.png"> <p>Congratulations! You have successfully cracked your first program. Remember, there is much more to learn, so practise your skills with crackmes and don't get discouraged if you don't get it the first time!</p></div></div><div class="footer"> <p>Copyright (c) 2022 Luca "PixelPenguin" F.</p></div><script src="/assets/js/typer.js" type="module"></script> </body></html>
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Reverse Engineering [2]: Your First Crackme</title>
+        <link rel="stylesheet" href="/assets/css/post.css">
+        <link rel="icon" href="/icon.ico">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="UTF-8">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    </head>
+    <body>
+        <nav class="crumbs">
+                <span><a href="/index.html">Home</a></span>
+                <span><a href="/blog.html">Blog</a></span>
+                <span>Reverse Engineering [2]: Your First Crackme</span>
+            </ol>
+        </nav>
+        <div class="content">
+            <span class="title">
+                <h1 class="cmd-effect" id="page-title"><noscript>Reverse Engineering [2]: Your First Crackme</noscript></h1>
+                <p>February 26, 2023</p>
+                <div class="tags">
+                    <span>reverse engineering</span>
+                    <span>lessons</span>
+                </div>
+            </span>
+            <hr/>
+            <div class="post">
+                <p>If you haven't read my <a href="RE1.html">first post</a> on reverse engineering, please do so as it will give you a better understanding of what we will be doing in this post.</p>
+
+                <p>Today, we will be discussing how to crack a very simple program. A popular site for reverse engineering exercises is "<a href="https://crackmes.one">crackmes.one</a>" where you can find many files to practice with. However, in this post, I will show you how to crack a simple program that I have created using C++. I recommend starting with simple programs and then advancing to more complex ones as your knowledge grows. Let's get started with the lesson!</p>
+
+                <p>First, we need to create our program. You can either create one with me or get a simple one from crackme. I will be making my program in C++. Here's the code:</p>
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079524365433053194/cppRaw.png">
+
+                <p>Now that we have our program, let's go ahead and try to crack it! I will be using x64dbg/x32dbg since you may not have IDA Pro. You can download my crackme <a href="https://cdn.discordapp.com/attachments/1079519979650695270/1079529290875543653/BasicCrackMe.exe">here</a> if you want to follow along with the exact copy I am using.</p>
+
+                <p>Once you open x64dbg, drag the file into it. You should see something like this:</p>
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520010046812230/x64dbg_AijkkWK2qS.png">
+
+                <p>This may look intimidating, but it's easy to understand once you have knowledge about assembly (ASM). Once it's fully loaded, right-click in the disassembler region and search for the strings (Search For -> All Modules -> String References).</p>
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520105785991298/x64dbg_ClvJQuufPj.png">
+
+                <p>Once in the string view, let all the modules load. You may notice the license "402X-X5B9-L02A-MN29" at the top. Don't immediately assume that it's the license because there are compile-time and run-time encryption. We don't have any encryption on our key, so it doesn't apply to our file.<p/>
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520071392702605/x64dbg_ou0ZTpzTFE.png">
+
+                <p>A deeper dive into compile-time vs. run-time encryption:</p>
+                <p>Compile-time encryption is the process of encrypting data before the program itself is compiled. You can use a tool or library that encrypts the data and generates a header file containing the encrypted data. The header file should then be accessed by the program at run-time after decryption.</p>
+
+                <p>Run-time encryption is the process of encrypting data while the program is running. You must include an encryption library that can encrypt and decrypt the data as needed.</p>
+
+                <p>The main difference between the two is simple. Compile-time encryption occurs before the program is compiled, while run-time encryption occurs while the program is running.</p>
+
+                <p>Does the encryption method used matter? Not really. However, runtime encryption is better suited for dynamic encryption while compile-time encryption makes it more difficult to intercept.</p>
+
+                <p>Moving on to the topic of reverse engineering this file, let's search for the "Wrong Key!" string. To do this, use the search bar or press Ctrl+F and type in "Wrong Key" or your prompt. Once you have the prompt, double-click it to follow it back into the disassembler.</p>
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520143262097529/x64dbg_fbVFPC64hD.png">
+
+                <p>While our programs may look different, the ASM code I am looking at is:</p>
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520184924114974/x64dbg_M7gfdst4mF.png">
+
+                <p>The code block for this ASM code is:</p>
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079524376220807218/asmRaw.png">
+
+                <p>The "lea rdx, qword ptr ds:[Address here]" parts are where we load an affected address into the register, which in this case is "rdx." To make it less confusing, I have excluded the addresses of what we are loading inside the code block.</p>
+
+                <p>Before we dive into how to manipulate the code, let's go over how the code block is aligned:</p>
+                [Instruction] | [Address]
+
+                <p>The easiest way to crack this is by messing with the jumps. You can find a complete list of jump instructions on <a href="https://www.cs.uaf.edu/2015/fall/cs301/lecture/09_11_loops.html">cs.auf.edu</a>. On line 3, we have "jne," which stands for "jump if not equal." On line 7, we have "je," which stands for "jump if equal." For the first jump, we are jumping to the address "7FF7A56E1385," which is line 8 of our code block. For the second jump, we jump to the address "7FF7A56E138C," which is line 9 of our code block.</p>
+
+                <p>To edit instructions in x64dbg, right-click on the instruction and click "Assemble." Once you have done so, you can edit the instruction.</p>
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079526961078079568/image.png">
+
+                <p>To avoid jumping to the wrong key area if they are not equal, replace "jne" with "je." This will make it jump if it is equal rather than not equal. Also, change the second jump from "je" to "jne" to instantly skip loading the incorrect statement ("Wrong Key!\n").</p>
+
+                <p>After making these changes, your ASM code should look like this (if you are using my crackme):</p>
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079524386803044353/asmFinal.png">
+
+                <p>To patch the program with all the edited instructions, use the shortcut "Ctrl+P." Once the patch program UI pops up, make sure that both of the little checks in the "Patches" section are selected. Click on "Patch File" and save the file to the desired name and directory.</p>
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520466714238988/image.png">
+
+                <p>Before:</p>
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520532988448889/image.png">
+
+                <p>After:</p>
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520568119922708/image.png">
+
+                <p>Congratulations! You have successfully cracked your first program. Remember, there is much more to learn, so practise your skills with crackmes and don't get discouraged if you don't get it the first time!</p>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Copyright (c) 2022 Luca "PixelPenguin" F.</p>
+        </div>
+        <script src="/assets/js/typer.js" type="module"></script>
+    </body>
+</html>
