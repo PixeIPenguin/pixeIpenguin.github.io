@@ -15,7 +15,7 @@ html, body {
   color: var(--front-color);
 }
 
-img {
+.content .post img {
   max-width: 500px;
   max-height: 500px;
 }
