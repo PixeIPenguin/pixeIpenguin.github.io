@@ -36,13 +36,13 @@
                 <p>Now that we have our program, let's go ahead and try to crack it! I will be using x64dbg/x32dbg since you may not have IDA Pro. You can download my crackme <a href="https://cdn.discordapp.com/attachments/1079519979650695270/1079529290875543653/BasicCrackMe.exe">here</a> if you want to follow along with the exact copy I am using.</p>
 
                 <p>Once you open x64dbg, drag the file into it. You should see something like this:</p>
-                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520010046812230/x64dbg_AijkkWK2qS.png">
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520010046812230/x64dbg_AijkkWK2qS.png" style="width: 100%;margin: 0.5rem 0;">
 
                 <p>This may look intimidating, but it's easy to understand once you have knowledge about assembly (ASM). Once it's fully loaded, right-click in the disassembler region and search for the strings (Search For -> All Modules -> String References).</p>
-                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520105785991298/x64dbg_ClvJQuufPj.png">
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520105785991298/x64dbg_ClvJQuufPj.png" style="width: 100%;margin: 0.5rem 0;">
 
                 <p>Once in the string view, let all the modules load. You may notice the license "402X-X5B9-L02A-MN29" at the top. Don't immediately assume that it's the license because there are compile-time and run-time encryption. We don't have any encryption on our key, so it doesn't apply to our file.<p/>
-                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520071392702605/x64dbg_ou0ZTpzTFE.png">
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520071392702605/x64dbg_ou0ZTpzTFE.png" style="width: 100%;margin: 0.5rem 0;">
 
                 <p>A deeper dive into compile-time vs. run-time encryption:</p>
                 <p>Compile-time encryption is the process of encrypting data before the program itself is compiled. You can use a tool or library that encrypts the data and generates a header file containing the encrypted data. The header file should then be accessed by the program at run-time after decryption.</p>
@@ -54,13 +54,13 @@
                 <p>Does the encryption method used matter? Not really. However, runtime encryption is better suited for dynamic encryption while compile-time encryption makes it more difficult to intercept.</p>
 
                 <p>Moving on to the topic of reverse engineering this file, let's search for the "Wrong Key!" string. To do this, use the search bar or press Ctrl+F and type in "Wrong Key" or your prompt. Once you have the prompt, double-click it to follow it back into the disassembler.</p>
-                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520143262097529/x64dbg_fbVFPC64hD.png">
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520143262097529/x64dbg_fbVFPC64hD.png" style="width: 100%;margin: 0.5rem 0;">
 
                 <p>While our programs may look different, the ASM code I am looking at is:</p>
-                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520184924114974/x64dbg_M7gfdst4mF.png">
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520184924114974/x64dbg_M7gfdst4mF.png" style="width: 100%;margin: 0.5rem 0;">
 
                 <p>The code block for this ASM code is:</p>
-                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079524376220807218/asmRaw.png">
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079524376220807218/asmRaw.png" style="width: 100%;margin: 0.5rem 0;">
 
                 <p>The "lea rdx, qword ptr ds:[Address here]" parts are where we load an affected address into the register, which in this case is "rdx." To make it less confusing, I have excluded the addresses of what we are loading inside the code block.</p>
 
@@ -70,21 +70,21 @@
                 <p>The easiest way to crack this is by messing with the jumps. You can find a complete list of jump instructions on <a href="https://www.cs.uaf.edu/2015/fall/cs301/lecture/09_11_loops.html">cs.auf.edu</a>. On line 3, we have "jne," which stands for "jump if not equal." On line 7, we have "je," which stands for "jump if equal." For the first jump, we are jumping to the address "7FF7A56E1385," which is line 8 of our code block. For the second jump, we jump to the address "7FF7A56E138C," which is line 9 of our code block.</p>
 
                 <p>To edit instructions in x64dbg, right-click on the instruction and click "Assemble." Once you have done so, you can edit the instruction.</p>
-                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079526961078079568/image.png">
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079526961078079568/image.png" style="width: 100%;margin: 0.5rem 0;">
 
                 <p>To avoid jumping to the wrong key area if they are not equal, replace "jne" with "je." This will make it jump if it is equal rather than not equal. Also, change the second jump from "je" to "jne" to instantly skip loading the incorrect statement ("Wrong Key!\n").</p>
 
                 <p>After making these changes, your ASM code should look like this (if you are using my crackme):</p>
-                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079524386803044353/asmFinal.png">
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079524386803044353/asmFinal.png" style="width: 100%;margin: 0.5rem 0;">
 
                 <p>To patch the program with all the edited instructions, use the shortcut "Ctrl+P." Once the patch program UI pops up, make sure that both of the little checks in the "Patches" section are selected. Click on "Patch File" and save the file to the desired name and directory.</p>
-                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520466714238988/image.png">
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520466714238988/image.png" style="width: 100%;margin: 0.5rem 0;">
 
                 <p>Before:</p>
-                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520532988448889/image.png">
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520532988448889/image.png" style="width: 100%;margin: 0.5rem 0;">
 
                 <p>After:</p>
-                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520568119922708/image.png">
+                <img src="https://cdn.discordapp.com/attachments/1079519979650695270/1079520568119922708/image.png" style="width: 100%;margin: 0.5rem 0;">
 
                 <p>Congratulations! You have successfully cracked your first program. Remember, there is much more to learn, so practise your skills with crackmes and don't get discouraged if you don't get it the first time!</p>
             </div>
